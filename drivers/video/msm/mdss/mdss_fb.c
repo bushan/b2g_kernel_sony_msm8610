@@ -44,6 +44,7 @@
 #include <linux/file.h>
 #include <linux/memory_alloc.h>
 #include <linux/kthread.h>
+#include <linux/gpio.h>
 
 #include <mach/board.h>
 #include <mach/memory.h>
@@ -52,6 +53,8 @@
 #include <mach/msm_memtypes.h>
 
 #include "mdss_fb.h"
+
+#include <linux/leds-lm3533.h>
 
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
 #define MDSS_FB_NUM 3
@@ -62,6 +65,7 @@
 #define MAX_FBI_LIST 32
 static struct fb_info *fbi_list[MAX_FBI_LIST];
 static int fbi_list_index;
+static bool LCD_init=false;
 
 static u32 mdss_fb_pseudo_palette[16] = {
 	0x00000000, 0xffffffff, 0xffffffff, 0xffffffff,
@@ -246,6 +250,20 @@ static ssize_t mdss_fb_get_split(struct device *dev,
 	return ret;
 }
 
+static ssize_t mdss_fb_lcm_module_id(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	ssize_t ret = 0;
+	
+	printk(KERN_INFO"tracy:LCM_ID_mdss:%d \n",gpio_get_value(78));
+	if(gpio_get_value(78))
+		ret = snprintf(buf, PAGE_SIZE, "TRULY\n");
+	else
+		ret = snprintf(buf, PAGE_SIZE, "TCL\n");
+	
+	return ret;
+}
+
 static ssize_t mdss_mdp_show_blank_event(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -263,11 +281,13 @@ static ssize_t mdss_mdp_show_blank_event(struct device *dev,
 static DEVICE_ATTR(msm_fb_type, S_IRUGO, mdss_fb_get_type, NULL);
 static DEVICE_ATTR(msm_fb_split, S_IRUGO, mdss_fb_get_split, NULL);
 static DEVICE_ATTR(show_blank_event, S_IRUGO, mdss_mdp_show_blank_event, NULL);
+static DEVICE_ATTR(lcm_module_id, S_IRUGO, mdss_fb_lcm_module_id, NULL);
 
 static struct attribute *mdss_fb_attrs[] = {
 	&dev_attr_msm_fb_type.attr,
 	&dev_attr_msm_fb_split.attr,
 	&dev_attr_show_blank_event.attr,
+	&dev_attr_lcm_module_id.attr,
 	NULL,
 };
 
@@ -1211,6 +1231,7 @@ static int mdss_fb_release_all(struct fb_info *info, bool release_all)
 	}
 
 	if (!mfd->ref_cnt) {
+		lm3533_backlight_control(0);
 		ret = mdss_fb_blank_sub(FB_BLANK_POWERDOWN, info,
 			mfd->op_enable);
 		if (ret) {
@@ -1528,6 +1549,11 @@ static int __mdss_fb_perform_commit(struct msm_fb_data_type *mfd)
 			pr_err("pan display failed %x on fb%d\n", ret,
 					mfd->index);
 	}
+	if(LCD_init==false)
+				{
+			           lm3533_backlight_control(0);
+				    LCD_init=true;
+				}
 	if (!ret)
 		mdss_fb_update_backlight(mfd);
 

@@ -70,3 +70,7 @@ obj-$(CONFIG_QSEECOM) += qseecom.o
 obj-$(CONFIG_QFP_FUSE) += qfp_fuse.o
 obj-$(CONFIG_TI_DRV2667) += ti_drv2667.o
 obj-$(CONFIG_QPNP_MISC) += qpnp-misc.o
+obj-$(CONFIG_SENSORS_AK8963) += akm8963.o
+obj-$(CONFIG_ARIMA_GPS_ELNA) += gps_elna.o
+#obj-$(CONFIG_SENSORS_MMC3416XPJ_MAG)	+= mmc3416x.o mecs.o
+obj-y				+= postoffice.o

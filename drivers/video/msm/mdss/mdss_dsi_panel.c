@@ -24,6 +24,8 @@
 
 #include "mdss_dsi.h"
 
+#include <linux/leds-lm3533.h>
+
 #define DT_CMD_HDR 6
 
 DEFINE_LED_TRIGGER(bl_led_trigger);
@@ -295,7 +297,7 @@ static void mdss_dsi_panel_bl_ctrl(struct mdss_panel_data *pdata,
 
 	switch (ctrl_pdata->bklt_ctrl) {
 	case BL_WLED:
-		led_trigger_event(bl_led_trigger, bl_level);
+		lm3533_backlight_control(bl_level);
 		break;
 	case BL_PWM:
 		mdss_dsi_panel_bklt_pwm(ctrl_pdata, bl_level);
@@ -848,6 +850,8 @@ static int mdss_panel_parse_dt(struct device_node *np,
 
 	mdss_dsi_parse_dcs_cmds(np, &ctrl_pdata->off_cmds,
 		"qcom,mdss-dsi-off-command", "qcom,mdss-dsi-off-command-state");
+	mdss_dsi_parse_dcs_cmds(np, &ctrl_pdata->esd_cmds,
+		"qcom,mdss-dsi-esd-command", "qcom,mdss-dsi-esd-state");
 
 	return 0;
 
