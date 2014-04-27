@@ -295,6 +295,15 @@ static void mdss_dsi_panel_bl_ctrl(struct mdss_panel_data *pdata,
 	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
 
+	/*
+	 * Some backlight controllers specify a minimum duty cycle
+	 * for the backlight brightness. If the brightness is less
+	 * than it, the controller can malfunction.
+	 */
+
+	if ((bl_level < pdata->panel_info.bl_min) && (bl_level != 0))
+		bl_level = pdata->panel_info.bl_min;
+
 	switch (ctrl_pdata->bklt_ctrl) {
 	case BL_WLED:
 		lm3533_backlight_control(bl_level);
@@ -391,7 +400,7 @@ static int mdss_dsi_parse_dcs_cmds(struct device_node *np,
 		if (dchdr->dlen > len) {
 			pr_err("%s: dtsi cmd=%x error, len=%d",
 				__func__, dchdr->dtype, dchdr->dlen);
-			return -ENOMEM;
+			goto exit_free;
 		}
 		bp += sizeof(*dchdr);
 		len -= sizeof(*dchdr);
@@ -403,14 +412,13 @@ static int mdss_dsi_parse_dcs_cmds(struct device_node *np,
 	if (len != 0) {
 		pr_err("%s: dcs_cmd=%x len=%d error!",
 				__func__, buf[0], blen);
-		kfree(buf);
-		return -ENOMEM;
+		goto exit_free;
 	}
 
 	pcmds->cmds = kzalloc(cnt * sizeof(struct dsi_cmd_desc),
 						GFP_KERNEL);
 	if (!pcmds->cmds)
-		return -ENOMEM;
+		goto exit_free;
 
 	pcmds->cmd_cnt = cnt;
 	pcmds->buf = buf;
@@ -438,6 +446,10 @@ static int mdss_dsi_parse_dcs_cmds(struct device_node *np,
 		pcmds->buf[0], pcmds->blen, pcmds->cmd_cnt, pcmds->link_state);
 
 	return 0;
+
+exit_free:
+	kfree(buf);
+	return -ENOMEM;
 }
 
 
