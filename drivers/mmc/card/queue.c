@@ -357,40 +357,35 @@ int mmc_init_queue(struct mmc_queue *mq, struct mmc_card *card,
 
 retry:
 		mqrq_cur->sg = mmc_alloc_sg(host->max_segs, &ret);
-		//if (ret)
 
 		if (ret == -ENOMEM)
 			goto cur_sg_alloc_failed;
 		else if (ret)
 			goto cleanup_queue;
 
-
 		mqrq_prev->sg = mmc_alloc_sg(host->max_segs, &ret);
-		//if (ret)
 		if (ret == -ENOMEM)
 			goto prev_sg_alloc_failed;
 		else if (ret)
 			goto cleanup_queue;
-	//}
 
-	goto success;
+		goto success;
 
-	prev_sg_alloc_failed:
+prev_sg_alloc_failed:
 		kfree(mqrq_cur->sg);
 		mqrq_cur->sg = NULL;
 
-	cur_sg_alloc_failed:
+cur_sg_alloc_failed:
 		host->max_segs /= 2;
 		if (host->max_segs) {
 			goto retry;
 		} else {
-		host->max_segs = max_segs;
-		 goto cleanup_queue;
-			}
+			host->max_segs = max_segs;
+			goto cleanup_queue;
 		}
+	}
 
-	success:
-
+success:
 	sema_init(&mq->thread_sem, 1);
 
 	mq->thread = kthread_run(mmc_queue_thread, mq, "mmcqd/%d%s",

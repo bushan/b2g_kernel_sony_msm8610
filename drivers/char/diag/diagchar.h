@@ -237,6 +237,7 @@ struct diag_smd_info {
 
 	int in_busy_1;
 	int in_busy_2;
+	spinlock_t in_busy_lock;
 
 	unsigned char *buf_in_1;
 	unsigned char *buf_in_2;
@@ -301,7 +302,7 @@ struct diagchar_dev {
 	/* Whether or not the peripheral supports STM */
 	int peripheral_supports_stm[NUM_SMD_CONTROL_CHANNELS];
 	/* DCI related variables */
-	struct dci_pkt_req_tracking_tbl *req_tracking_tbl;
+	struct list_head dci_req_list;
 	struct diag_dci_client_tbl *dci_client_tbl;
 	int dci_tag;
 	int dci_client_id;
@@ -348,6 +349,7 @@ struct diagchar_dev {
 	int separate_cmdrsp[NUM_SMD_CONTROL_CHANNELS];
 	unsigned char *usb_buf_out;
 	unsigned char *apps_rsp_buf;
+	unsigned char *user_space_data_buf;
 	/* buffer for updating mask to peripherals */
 	unsigned char *buf_msg_mask_update;
 	unsigned char *buf_log_mask_update;
@@ -378,6 +380,7 @@ struct diagchar_dev {
 	struct work_struct diag_usb_disconnect_work;
 #endif
 	struct workqueue_struct *diag_wq;
+	struct workqueue_struct *diag_usb_wq;
 	struct work_struct diag_drain_work;
 	struct workqueue_struct *diag_cntl_wq;
 	uint8_t *msg_masks;

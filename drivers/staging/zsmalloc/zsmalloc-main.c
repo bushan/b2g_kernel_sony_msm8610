@@ -450,6 +450,7 @@ static void *obj_location_to_handle(struct page *page, unsigned long obj_idx)
 
 	return (void *)handle;
 }
+
 /*
  * Decode <page, obj_idx> pair from the given object handle. We adjust the
  * decoded obj_idx back to its original value since it was adjusted in
